@@ -365,44 +365,50 @@ What is expressed in code has a defined semantics and can (in principle) be chec
 
 **Example**:
 
-	class Date {
-		// ...
-	public:
-		Month month() const;	// do
-		int month(); 			// don't
-		// ...
-	};
+```c++
+class Date {
+    // ...
+public:
+    Month month() const;	// do
+    int month(); 			// don't
+    // ...
+};
+```
 
 The first declaration of `month` is explicit about returning a `Month` and about not modifying the state of the `Date` object.
 The second version leaves the reader guessing and opens more possibilities for uncaught bugs.
 
 **Example**:
 
-	void do_something(vector<string>& v)
-	{
-		string val;
-		cin>>val;
-		// ...
-		int index = 0;						// bad
-		for(int i=0; i<v.size(); ++i)
-			if (v[i]==val) {
-				index = i;
-				break;
-			}
-		// ...
-	}
+```c++
+void do_something(vector<string>& v)
+{
+    string val;
+    cin>>val;
+    // ...
+    int index = 0;						// bad
+    for(int i=0; i<v.size(); ++i)
+        if (v[i]==val) {
+            index = i;
+            break;
+        }
+    // ...
+}
+```
 	
 That loop is a restricted form of `std::find`.
 A much clearer expression of intent would be:
 
-	void do_something(vector<string>& v)
-	{
-		string val;
-		cin>>val;
-		// ...
-		auto p = find(v,val);				// better
-		// ...
-	}
+```c++
+void do_something(vector<string>& v)
+{
+    string val;
+    cin>>val;
+    // ...
+    auto p = find(v,val);				// better
+    // ...
+}
+```
 
 A well-designed library expresses intent (what is to be done, rather than just how something is being done) far better than direct use of language features.
 
@@ -412,16 +418,20 @@ Any programmer using these guidelines should know the [Guidelines Support Librar
 
 **Example**:
 
-	change_speed(double s);	// bad: what does s signify?
-	// ...
-	change_speed(2.3);
+```c++
+change_speed(double s);	// bad: what does s signify?
+// ...
+change_speed(2.3);
+```
 	
 A better approach is to be explicit about the meaning of the double (new speed or delta on old speed?) and the unit used:
 
-	change_speed(Speed s);	// better: the meaning of s is specified
-	// ...
-	change_speed(2.3);		// error: no unit
-	change_speed(23m/10s);	// meters per second
+```c++
+change_speed(Speed s);	// better: the meaning of s is specified
+// ...
+change_speed(2.3);		// error: no unit
+change_speed(23m/10s);	// meters per second
+```
 
 We could have accepted a plain (unit-less) `double` as a delta, but that would have been error-prone.
 If we wanted both absolute speed and deltas, we would have defined a `Delta` type.
@@ -455,25 +465,33 @@ In such cases, control their (dis)use with non-core Coding Guidelines.
 
 **Example**:
 
-	int i = 0;
-	while (i<v.size()) {
-		// ... do something with v[i] ...
-	}
+```c++
+int i = 0;
+while (i<v.size()) {
+    // ... do something with v[i] ...
+}
+```
 
 The intent of "just" looping over the elements of `v` is not expressed here. The implementation detail of an index is exposed (so that it might be misused), and `i` outlives the scope of the loop, which may or may not be intended. The reader cannot know from just this section of code.
 
 Better:
 
-	for (auto x : v) { /* do something with x */ }
+```c++
+for (auto x : v) { /* do something with x */ }
+```
 
 Now, there is no explicit mention of the iteration mechanism, and the loop operates on a copy of elements so that accidental modification cannot happen. If modification is desired, say so:
 
-	for (auto& x : v) { /* do something with x */ }
+```c++
+for (auto& x : v) { /* do something with x */ }
+```
 
 Sometimes better still, use a named algorithm:
 
-	for_each(v,[](int x) { /* do something with x */ });
-	for_each(parallel.v,[](int x) { /* do something with x */ });
+```c++
+for_each(v,[](int x) { /* do something with x */ });
+for_each(parallel.v,[](int x) { /* do something with x */ });
+```
 
 The last variant makes it clear that we are not interested in the order in which the elements of `v` are handled.
 
@@ -489,8 +507,10 @@ A programmer should be familiar with
 
 **Example**: if two `int`s are meant to be the coordinates of a 2D point, say so:
 
-		drawline(int,int,int,int);	// obscure
-		drawline(Point,Point);		// clearer
+```c++
+drawline(int,int,int,int);	// obscure
+drawline(Point,Point);		// clearer
+```
 
 **Enforcement**: Look for common patterns for which there are better alternatives
 
@@ -536,27 +556,33 @@ For example:
 
 **Example**:
 
-	void initializer(Int x)
-		// Int is an alias used for integers
-	{
-		static_assert(sizeof(Int)>=4);	// do: compile-time check
+```c++
+void initializer(Int x)
+    // Int is an alias used for integers
+{
+    static_assert(sizeof(Int)>=4);	// do: compile-time check
 
-		int bits = 0;					// don't: avoidable code
-		for (Int i = 1; i; i<<=1)
-			++bits;
-		if (bits<32)
-			cerr << "Int too small\n";
-			
-		// ...
-	}
+    int bits = 0;					// don't: avoidable code
+    for (Int i = 1; i; i<<=1)
+        ++bits;
+    if (bits<32)
+        cerr << "Int too small\n";
+        
+    // ...
+}
+```
 
 **Example; don't**:
 
-	void read(int* p, int n);		// read max n integers into *p
+```c++
+void read(int* p, int n);		// read max n integers into *p
+```
 	
 **Example**:
 
-	void read(array_view<int> r);	// read into the range of integers r
+```c++
+void read(array_view<int> r);	// read into the range of integers r
+```
 
 **Alternative formulation**: Don't postpone to run time what can be done well at compile time.
 
@@ -575,23 +601,27 @@ For example:
 
 **Example, bad**:
 
-	extern void f(int* p);	// separately compiled, possibly dynamically loaded
-	
-	void g(int n)
-	{
-		f(new int[n]);	// bad: the number of elements is not passed to f()
-	}
+```c++
+extern void f(int* p);	// separately compiled, possibly dynamically loaded
+
+void g(int n)
+{
+    f(new int[n]);	// bad: the number of elements is not passed to f()
+}
+```
 
 Here, a crucial bit of information (the number of elements) has been so thoroughly "obscured" that static analysis is probably rendered infeasible and dynamic checking can be very difficult when `f()` is part of an ABI so that we cannot "instrument" that pointer. We could embed helpful information into the free store, but that requires global changes to a system and maybe to the compiler. What we have here is a design that makes error detection very hard.
 
 **Example, bad**: We can of course pass the number of elements along with the pointer:
 
-	extern void f2(int* p, int n);	// separately compiled, possibly dynamically loaded
-	
-	void g2(int n)
-	{
-		f2(new int[n],m);	// bad: the wrong number of elements can be passed to f()
-	}
+```c++
+extern void f2(int* p, int n);	// separately compiled, possibly dynamically loaded
+
+void g2(int n)
+{
+    f2(new int[n],m);	// bad: the wrong number of elements can be passed to f()
+}
+```
 
 Passing the number of elements as an argument is better (and far more common) that just passing the pointer and relying on some (unstated) convention for knowing or discovering the number of elements. However (as shown), a simple typo can introduce a serious error. The connection between the two arguments of `f2()` is conventional, rather than explicit.
 
@@ -599,49 +629,55 @@ Also, it is implicit that `f2()` is supposed to `delete` its argument (or did th
 
 **Example, bad**: The standard library resource management pointers fail to pass the size when they point to an object:
 
-	extern void f3(unique_ptr<int[]>, int n);	// separately compiled, possibly dynamically loaded
+```c++
+extern void f3(unique_ptr<int[]>, int n);	// separately compiled, possibly dynamically loaded
 
-	void g3(int n)
-	{
-		f3(make_unique<int[]>(n),m);	// bad: pass ownership and size separately
-	}
+void g3(int n)
+{
+    f3(make_unique<int[]>(n),m);	// bad: pass ownership and size separately
+}
+```
 
 **Example**: We need to pass the pointer and the number of elements as an integral object:
 
-	extern void f4(vector<int>&);		// separately compiled, possibly dynamically loaded
-	extern void f4(array_view<int>);	// separately compiled, possibly dynamically loaded
+```c++
+extern void f4(vector<int>&);		// separately compiled, possibly dynamically loaded
+extern void f4(array_view<int>);	// separately compiled, possibly dynamically loaded
 
-	void g3(int n)
-	{
-		vector<int> v(n);
-		f4(v);					// pass a reference, retain ownership
-		f4(array_view<int>{v});	// pass a view, retain ownership
-	}
+void g3(int n)
+{
+    vector<int> v(n);
+    f4(v);					// pass a reference, retain ownership
+    f4(array_view<int>{v});	// pass a view, retain ownership
+}
+```
 
 This design carries the number of elements along as an integral part of an object, so that errors are unlikely and dynamic (run-time) checking is always feasible, if not always affordable.
 
 **Example**: How do we transfer both ownership and all information needed for validating use?
 
-	vector<int> f5(int n)	// OK: move
-	{
-		vector<int> v(n);
-		// ... initialize v ...
-		return v;
-	}
+```c++
+vector<int> f5(int n)	// OK: move
+{
+    vector<int> v(n);
+    // ... initialize v ...
+    return v;
+}
 
-	unique_ptr<int[]> f6(int n)	// bad: looses n
-	{
-		auto p = make_unique<int[]>(n);
-		// ... initialize *p ...
-		return p;
-	}
+unique_ptr<int[]> f6(int n)	// bad: looses n
+{
+    auto p = make_unique<int[]>(n);
+    // ... initialize *p ...
+    return p;
+}
 
-	owner<int*> f7(int n)	// bad: looses n and we might forget to delete
-	{
-		owner<int*> p = new int[n];
-		// ... initialize *p ...
-		return p;
-	}
+owner<int*> f7(int n)	// bad: looses n and we might forget to delete
+{
+    owner<int*> p = new int[n];
+    // ... initialize *p ...
+    return p;
+}
+```
 
 **Example**:
 
@@ -661,71 +697,79 @@ Avoid errors leading to (possibly unrecognized) wrong results.
 
 **Example**:
 
-	void increment1(int* p, int n)	// bad: error prone
-	{
-		for (int i=0; i<n; ++i) ++p[i];
-	}
+```c++
+void increment1(int* p, int n)	// bad: error prone
+{
+    for (int i=0; i<n; ++i) ++p[i];
+}
 
-	void use1(int m)
-	{
-		const int n = 10;
-		int a[n] = {};
-		// ...
-		increment1(a,m);	// maybe typo, maybe m<=n is supposed
-							// but assume that m==20
-		// ...
-	}
+void use1(int m)
+{
+    const int n = 10;
+    int a[n] = {};
+    // ...
+    increment1(a,m);	// maybe typo, maybe m<=n is supposed
+                        // but assume that m==20
+    // ...
+}
+```
 
 Here we made a small error in `use1` that will lead to corrupted data or a crash.
 The (pointer,count) interface leaves `increment1()` with no realistic way of  defending itself against out-of-range errors.
 Assuming that we could check subscripts for out of range access, the error would not be discovered until `p[10]` was accessed.
 We could check earlier and improve the code:
 
-	void increment2(array_view<int> p)
-	{
-		for (int x : p) ++x;
-	}
+```c++
+void increment2(array_view<int> p)
+{
+    for (int x : p) ++x;
+}
 
-	void use2(int m)
-	{
-		const int n = 10;
-		int a[n] = {};
-		// ...
-		increment2({a,m});	// maybe typo, maybe m<=n is supposed
-		// ...
-	}
+void use2(int m)
+{
+    const int n = 10;
+    int a[n] = {};
+    // ...
+    increment2({a,m});	// maybe typo, maybe m<=n is supposed
+    // ...
+}
+```
 
 Now, `m<=n` can be checked at the point of call (early) rather than later.
 If all we had was a typo so that we meant to use `n` as the bound, the code could be further simplified (eliminating the possibility of an error):
 
-	void use3(int m)
-	{
-		const int n = 10;
-		int a[n] = {};
-		// ...
-		increment2(a);	// the number of elements of a need not be repeated
-		// ...
-	}
+```c++
+void use3(int m)
+{
+    const int n = 10;
+    int a[n] = {};
+    // ...
+    increment2(a);	// the number of elements of a need not be repeated
+    // ...
+}
+```
 
 **Example, bad**: Don't repeatedly check the same value. Don't pass structured data as strings:
 
-	Date read_date(istream& is);	// read date from istream
-	
-	Date extract_date(const string& s);	// extract date from string
-	
-	user1(const string& date)	// manipulate date
-	{
-		auto d = extract_date(date);
-		// ...
-	}
-		
-	void user2()
-	{
-		Date d = read_date(cin);
-		// ...
-		user1(d.to_string());
-		// ...
-	}
+```c++
+Date read_date(istream& is);	// read date from istream
+
+Date extract_date(const string& s);	// extract date from string
+
+user1(const string& date)	// manipulate date
+{
+    auto d = extract_date(date);
+    // ...
+}
+    
+void user2()
+{
+    Date d = read_date(cin);
+    // ...
+    user1(d.to_string());
+    // ...
+}
+```
 	
 The date is validated twice (by the `Date` constructor) and passed as an character string (unstructured data).
 
@@ -733,23 +777,25 @@ The date is validated twice (by the `Date` constructor) and passed as an charact
 There are cases where checking early is dumb because you may not ever need the value,
 or may only need part of the value that is more easily checked than the whole.
 
-	class Jet {	// Physics says: e*e < x*x + y*y + z*z
-   		float fx, fy, fz, fe;
-	public:
-   		Jet(float x, float y, float z, float e)
-			:fx(x), fy(y), fz(z), fe(e)
-		{
-			// Should I check the here that the values are physically meaningful?
-   		}
+```c++
+class Jet {	// Physics says: e*e < x*x + y*y + z*z
+    float fx, fy, fz, fe;
+public:
+    Jet(float x, float y, float z, float e)
+        :fx(x), fy(y), fz(z), fe(e)
+    {
+        // Should I check the here that the values are physically meaningful?
+    }
 
-   		float m() const
-		{
-     		// Should I handle the degenerate case here?
-     		return sqrt(x*x + y*y + z*z - e*e);
-   		}
-		   
-		???
-	};
+    float m() const
+    {
+        // Should I handle the degenerate case here?
+        return sqrt(x*x + y*y + z*z - e*e);
+    }
+       
+    ???
+};
+```
 
 The physical law for a jet (`e*e < x*x + y*y + z*z`) is not an invariant because the possibility of measurement errors.
 
@@ -771,24 +817,28 @@ The physical law for a jet (`e*e < x*x + y*y + z*z`) is not an invariant because
 
 **Example, bad**:
 
-	void f(char* name)
-	{
-		FILE* input = fopen(name,"r");
-		// ...
-		if (something) return;		// bad: if something==true, a file handle is leaked
-		// ...
-		fclose(input);
-	}
+```c++
+void f(char* name)
+{
+    FILE* input = fopen(name,"r");
+    // ...
+    if (something) return;		// bad: if something==true, a file handle is leaked
+    // ...
+    fclose(input);
+}
+```
 
 Prefer [RAII](Rr-raii):
 
-	void f(char* name)
-	{
-		ifstream input {name};
-		// ...
-		if (something) return;		// OK: no leak
-		// ...
-	}
+```c++
+void f(char* name)
+{
+    ifstream input {name};
+    // ...
+    if (something) return;		// OK: no leak
+    // ...
+}
+```
 
 **See also**: [The resource management section](#S-resources)
 
@@ -810,37 +860,39 @@ Alternatively, mark an owner as such using `owner` from [the GSL](#S-support).
 
 **Example**: ??? more and better suggestions for gratuitous waste welcome ???
 
-	struct X {
-		char ch;
-		int i;
-		string s;
-		char ch2;
-		
-		X& operator=(const X& a);
-		X(const X&);
-	};
+```c++
+struct X {
+    char ch;
+    int i;
+    string s;
+    char ch2;
+    
+    X& operator=(const X& a);
+    X(const X&);
+};
 
-	X waste(const char* p)
-	{
-		if (p==nullptr) throw Nullptr_error{};
-		int n = strlen(p);
-		auto buf = new char[n];
-		for (int i = 0; i<n; ++i) buf[i] = p[i];
-		if (buf==nullptr) throw Allocation_error{};
-		// ... manipulate buffer ...
-		X x;
-		x.ch = 'a';
-		x.s = string(n);	// give x.s space for *ps
-		for (int i=0; i<x.s.size(); ++i) x.s[i] = buf[i];	// copy buf into x.s
-		delete buf;
-		return x;
-	}
-	
-	void driver()
-	{
-		X x = waste("Typical argument");
-		// ...
-	}
+X waste(const char* p)
+{
+    if (p==nullptr) throw Nullptr_error{};
+    int n = strlen(p);
+    auto buf = new char[n];
+    for (int i = 0; i<n; ++i) buf[i] = p[i];
+    if (buf==nullptr) throw Allocation_error{};
+    // ... manipulate buffer ...
+    X x;
+    x.ch = 'a';
+    x.s = string(n);	// give x.s space for *ps
+    for (int i=0; i<x.s.size(); ++i) x.s[i] = buf[i];	// copy buf into x.s
+    delete buf;
+    return x;
+}
+
+void driver()
+{
+    X x = waste("Typical argument");
+    // ...
+}
+```
 	
 Yes, this is a carricature, but we have seen every individual mistake in production code, and worse.
 Note that the layout of `X` guarantees that at least 6 bytes (and most likely more) bytes are wasted.
@@ -901,10 +953,12 @@ See also
 **Example, bad**:
 Controlling the behavior of a function through a global (namespace scope) variable (a call mode) is implicit and potentially confusing. For example,
 
-	int rnd(double d)
-	{
-		return (rnd_up) ? ceil(d) : d;	// don't: "invisible" dependency
-	}
+```c++
+int rnd(double d)
+{
+    return (rnd_up) ? ceil(d) : d;	// don't: "invisible" dependency
+}
+```
 
 It will not be obvious to a caller that the meaning of two calls of `rnd(7.2)` might give different results.
 
@@ -913,7 +967,9 @@ The use of a non-local control is potentially confusing, but controls only imple
 
 **Example, bad**: Reporting through non-local variables (e.g., `errno`) is easily ignored. For example:
 
-	fprintf(connection,"logging: %d %d %d\n",x,y,s); // don't: no test of printf's return value
+```c++
+fprintf(connection,"logging: %d %d %d\n",x,y,s); // don't: no test of printf's return value
+```
 	
 What if the connection goes down so than no logging output is produced? See Rule I.??.
 
@@ -937,19 +993,21 @@ Functions can be template functions and sets of functions can be classes or clas
 
 **Example**:
 
-	struct Data {
-		// ... lots of stuff ...
-	} data;			// non-const data
+```c+++
+struct Data {
+    // ... lots of stuff ...
+} data;			// non-const data
 
-	void compute()	// don't
-	{
-		// ...use data ...
-	}
+void compute()	// don't
+{
+    // ...use data ...
+}
 
-	void output()	// don't
-	{
-		// ... use data ...
-	}
+void output()	// don't
+{
+    // ... use data ...
+}
+```
 
 Who else might modify `data`?
 
@@ -977,9 +1035,11 @@ Every pointer or reference to mutable data is a potential data race.
 
 **Example**:
 	
-	class Singleton {
-		// ... lots of stuff to ensure that only one Singleton object is created, that it is initialized properly, etc.
-	};
+```c++
+class Singleton {
+    // ... lots of stuff to ensure that only one Singleton object is created, that it is initialized properly, etc.
+};
+```
 
 There are many variants of the singleton idea.
 That's part of the problem.
@@ -988,11 +1048,13 @@ That's part of the problem.
 
 **Exception**: You can use the simplest "singleton" (so simple that it is often not considered a singleton) to get initialization on first use, if any:
 
-	X& myX()
-	{
-		static X my_x {3};
-		return my_x;
-	}
+```c++
+X& myX()
+{
+    static X my_x {3};
+    return my_x;
+}
+```
 
 This one of the most effective solution to problem related to initialization order.
 In a multi-threaded environment the initialization of the static object does not introduce a race condition
@@ -1015,7 +1077,9 @@ Also, precisely typed code often optimize better.
 
 **Example; don't**: Consider
 
-	void pass(void* data);	// void* is suspicious
+```c++
+void pass(void* data);	// void* is suspicious
+```
 
 Now the callee has to cast the data pointer (back) to a correct type to use it. That is error-prone and often verbose.
 Avoid `void*` in interfaces.
@@ -1025,19 +1089,23 @@ Consider using a variant or a pointer to base instead. (Future note: Consider a 
 
 **Example; bad**: Consider
 
-	void draw_rect(int,int,int,int);	// great opportunities for mistakes
-	
-	draw_rect(p.x,p.y,10,20);			// what does 10,20 mean?
+```c++
+void draw_rect(int,int,int,int);	// great opportunities for mistakes
+
+draw_rect(p.x,p.y,10,20);			// what does 10,20 mean?
+```
 
 An `int` can carry arbitrary forms of information, so we must guess about the meaning of the four `int`s.
 Most likely, the first two are an `x`,`y` coordinate pair, but what are the last two?
 Comments and parameter names can help, but we could be explicit:
 
-	void draw_rectangle(Point top_left, Point bottom_right);
-	void draw_rectangle(Point top_left, Size height_width);
-	
-	draw_rectangle(p,Point{10,20});	// two corners
-	draw_rectangle(p,Size{10,20});	// one corner and a (height,width) pair
+```c++
+void draw_rectangle(Point top_left, Point bottom_right);
+void draw_rectangle(Point top_left, Size height_width);
+
+draw_rectangle(p,Point{10,20});	// two corners
+draw_rectangle(p,Size{10,20});	// one corner and a (height,width) pair
+```
 
 Obviously, we cannot catch all errors through the static type system
 (e.g., the fact that a first argument is supposed to be a top-left point is left to convention (naming and comments)).
@@ -1058,15 +1126,21 @@ Obviously, we cannot catch all errors through the static type system
 
 **Example**: Consider
 
-	double sqrt(double x);
+```c++
+double sqrt(double x);
+```
 
 Here `x` must be positive. The type system cannot (easily and naturally) express that, so we must use other means. For example:
 
-	double sqrt(double x); // x must be positive
+```c++
+double sqrt(double x); // x must be positive
+```
 
 Some preconditions can be expressed as assertions. For example:
 
-	double sqrt(double x) { Expects(x>=0); /* ... */ }
+```c++
+double sqrt(double x) { Expects(x>=0); /* ... */ }
+```
 
 Ideally, that `Expects(x>=0)` should be part of the interface of `sqrt()` but that's not easily done. For now, we place it in the definition (function body).
 
@@ -1091,12 +1165,14 @@ We don't need to mentioning it for each member function.
 
 **Example**:
 
-	int area(int height, int width)
-	{
-		Expects(height>0 && width>0);			// good
-		if (height>0 && width>0) my_error();	// obscure
-		// ...
-	}
+```c+++
+int area(int height, int width)
+{
+    Expects(height>0 && width>0);			// good
+    if (height>0 && width>0) my_error();	// obscure
+    // ...
+}
+```
 
 **Note**: Preconditions can be stated in many ways, including comments, `if`-statements, and `assert()`. This can make them hard to distinguish from ordinary code, hard to update, hard to manipulate by tools, and may have the wrong semantics (do you always want to abort in debug mode and check nothing in productions runs?).
 
@@ -1114,38 +1190,46 @@ We don't need to mentioning it for each member function.
 
 **Example; bad**: Consider
 
-	int area(int height, int width) { return height*width; }	// bad
+```c++
+int area(int height, int width) { return height*width; }	// bad
+```
 
 Here, we (incautiously) left out the precondition specification, so it is not explicit that height and width must be positive.
 We also left out the postcondition specification, so it is not obvious that the algorithm (`height*width`) is wrong for areas larger than the largest integer.
 Overflow can happen.
 Consider using:
 
-	int area(int height, int width)
-	{
-		auto res = height*width;
-		Ensures(res>0);
-		return res;
-	}
+```c++
+int area(int height, int width)
+{
+    auto res = height*width;
+    Ensures(res>0);
+    return res;
+}
+```
 
 **Example, bad**: Consider a famous security bug
 
-	void f()	// problematic
-	{
-		char buffer[MAX];
-		// ...
-		memset(buffer,0,MAX);
-	}
+```c++
+void f()	// problematic
+{
+    char buffer[MAX];
+    // ...
+    memset(buffer,0,MAX);
+}
+```
 
 There was no postcondition stating that the buffer should be cleared and the optimizer eliminated the apparently redundant `memset()` call:
 
-	void f()	// better
-	{
-		char buffer[MAX];
-		// ...
-		memset(buffer,0,MAX);
-		Ensures(buffer[0]==0);
-	}
+```c++
+void f()	// better
+{
+    char buffer[MAX];
+    // ...
+    memset(buffer,0,MAX);
+    Ensures(buffer[0]==0);
+}
+```
 
 **Note** postconditions are often informally stated in a comment that states the purpose of a function; `Ensures()` can be used to make this more systematic, visible, and checkable.
 
@@ -1153,31 +1237,37 @@ There was no postcondition stating that the buffer should be cleared and the opt
 
 **Example**: Consider a function that manipulates a `Record`, using a `mutex` to avoid race conditions:
 
-	mutex m;
+```c++
+mutex m;
 
-	void manipulate(Record& r)	// don't
-	{
-		m.lock();
-		// ... no m.unlock() ...
-	}
+void manipulate(Record& r)	// don't
+{
+    m.lock();
+    // ... no m.unlock() ...
+}
+```
 
 Here, we "forgot" to state that the `mutex` should be released, so we don't know if the failure to ensure release of the `mutex` was a bug or a feature. Stating the postcondition would have made it clear:
 
-	void manipulate(Record& r)	// better: hold the mutex m while and only while manipulating r
-	{
-		m.lock();
-		// ... no m.unlock() ...
-	}
+```c++
+void manipulate(Record& r)	// better: hold the mutex m while and only while manipulating r
+{
+    m.lock();
+    // ... no m.unlock() ...
+}
+```
 
 The bug is now obvious.
 
 Better still, use [RAII](#Rc-raii) to ensure that the postcondition ("the lock must be released") is enforced in code:
 
-	void manipulate(Record& r)	// best
-	{
-		lock_guard _ {m};
-		// ...
-	}
+```c++
+void manipulate(Record& r)	// best
+{
+    lock_guard _ {m};
+    // ...
+}
+```
 	
 **Note**: Ideally, postconditions are stated in the interface/declaration so that users can easily see them.
 Only postconditions related to the users can be stated in the interface.
@@ -1193,13 +1283,15 @@ Postconditions related only to internal state belongs in the definition/implemen
 
 **Example**:
 
-	void f()
-	{
-		char buffer[MAX];
-		// ...
-		memset(buffer,0,MAX);
-		Ensures(buffer[0]==0);
-	}
+```c++
+void f()
+{
+    char buffer[MAX];
+    // ...
+    memset(buffer,0,MAX);
+    Ensures(buffer[0]==0);
+}
+```
 
 **Note**: preconditions can be stated in many ways, including comments, `if`-statements, and `assert()`. This can make them hard to distinguish from ordinary code, hard to update, hard to manipulate by tools, and may have the wrong semantics.
 
@@ -1217,12 +1309,14 @@ Ideally, that `Ensured` should be part of the interface that's not easily done. 
 
 **Example**: Use the ISO Concepts TS style of requirements specification. For example:
 
-	template<typename Iter, typename Val>
-	//	requires InputIterator<Iter> && EqualityComparable<ValueType<Iter>>,Val>
-	Iter find(Iter first, Iter last, Val v)
-	{
-		// ...
-	}
+```c++
+template<typename Iter, typename Val>
+//	requires InputIterator<Iter> && EqualityComparable<ValueType<Iter>>,Val>
+Iter find(Iter first, Iter last, Val v)
+{
+    // ...
+}
+```
 
 **Note**: Soon (maybe in 2016), most compilers will be able to check `requires` clauses once the `//` is removed.
 
@@ -1239,10 +1333,12 @@ This is a major source of errors.
 
 **Example**:
 
-	int printf(const char* ...);	// bad: return negative number if output fails
+```c++
+int printf(const char* ...);	// bad: return negative number if output fails
 
-	template <class F, class ...Args>
-	explicit thread(F&& f, Args&&... args);	// good: throw system_error if unable to start the new thread
+template <class F, class ...Args>
+explicit thread(F&& f, Args&&... args);	// good: throw system_error if unable to start the new thread
+```
 
 	
 **Note**: What is an error?
@@ -1257,13 +1353,15 @@ However, if failing to make a connection is considered an error, then a failure 
 **Alternative**: If you can't use exceptions (e.g. because your code is full of old-style raw-pointer use or because there are hard-real-time constraints),
 consider using a style that returns a pair of values:
 
-	int val;
-	int error_code;
-	tie(val,error_code) do_something();
-	if (error_code==0) {
-		// ... handle the error or exit ...
-	}
-	// ... use val ...
+```c++
+int val;
+int error_code;
+tie(val,error_code) do_something();
+if (error_code==0) {
+    // ... handle the error or exit ...
+}
+// ... use val ...
+```
 
 **Note**: We don't consider "performance" a valid reason not to use exceptions.
 
@@ -1287,22 +1385,26 @@ consider using a style that returns a pair of values:
 
 **Example**: Consider
 
-	X* compute(args)	// don't
-	{
-		X* res = new X{};
-		// ...
-		return res;
-	}
+```c++
+X* compute(args)	// don't
+{
+    X* res = new X{};
+    // ...
+    return res;
+}
+```
 
 Who deletes the returned `X`? The problem would be harder to spot if compute returned a reference.
 Consider returning the result by value (use move semantics if the result is large):
 
-	vector<double> compute(args)	// good
-	{
-		vector<double> res(10000);
-		// ...
-		return res;
-	}
+```c++
+vector<double> compute(args)	// good
+{
+    vector<double> res(10000);
+    // ...
+    return res;
+}
+```
 
 **Alternative**: Pass ownership using a "smart pointer", such as `unique_ptr` (for exclusive ownership) and `shared_ptr` (for shared ownership).
 However that is less elegant and less efficient unless reference semantics are needed.
@@ -1310,12 +1412,14 @@ However that is less elegant and less efficient unless reference semantics are n
 **Alternative**: Sometimes older code can't be modified because of ABI compatibility requirements or lack of resources.
 In that case, mark owning pointers using `owner` :
 
-	owner<X*> compute(args)		// It is now clear that ownership is transferred
-	{
-		owner<X*> res = new X{};
-		// ...
-		return res;
-	}
+```c++
+owner<X*> compute(args)		// It is now clear that ownership is transferred
+{
+    owner<X*> res = new X{};
+    // ...
+    return res;
+}
+```
 
 This tells analysis tools that `res` is an owner.
 That is, its value must be `delete`d or transferred to another owner, as is done here by the `return`.
